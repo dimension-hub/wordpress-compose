@@ -1,0 +1,49 @@
+version: '3'
+services:
+  mysql:
+    image: mariadb
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: db_wordpress
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: wordpress
+    restart: always
+  wordpress:
+    image: wordpress:php7.4-fpm-alpine
+    volumes:
+      - ./data/html:/var/www/html
+    depends_on:
+      - mysql
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      MYSQL_ROOT_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: db_wordpress
+      WORDPRESS_DB_USER: admin
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_TABLE_PREFIX: wp_
+    links:
+      - mysql
+    restart: always
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./data/html:/var/www/html
+    ports:
+      - 8080:80
+    links:
+      - wordpress
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    links:
+      - mysql:mysql
+    ports:
+      - 8081:80
+    environment:
+      PMA_HOST: mysql
+      MYSQL_USERNAME: admin
+      MYSQL_ROOT_PASSWORD: wordpress
